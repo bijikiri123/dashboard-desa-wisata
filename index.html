@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Dashboard Desa Wisata Indonesia — Kemenpar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+<div id="loading" style="position:fixed;inset:0;background:#0b1120;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="font-size:24px;color:#16c784;font-weight:700">Dashboard Desa Wisata</div>
+  <div style="color:#7a8aaa">Memuat data 6.207 desa wisata...<br><span style="font-size:11px;opacity:.7">Tunggu 3-5 detik...</span></div>
+  <div style="width:200px;height:4px;background:#1a2438;border-radius:4px;overflow:hidden">
+    <div style="width:0;height:100%;background:#16c784;animation:load 2s ease-in-out infinite;"></div>
+  </div>
+</div>
+<style>@keyframes load{0%,100%{width:0;} 50%{width:100%;}}</style>
+
+<header class="hdr">
+  <div class="logo">🏡</div>
+  <div>
+    <div class="logo-txt"><span>Desa Wisata</span> Indonesia</div>
+    <div style="font-size:9px;color:var(--muted)">Kementerian Pariwisata</div>
+    <div style="font-size:8px;color:var(--muted);margin-top:2px;opacity:.7">
+      <span style="color:var(--a2)">●</span> Update: 25 Mei 2026 · 
+      <span style="opacity:.9">Raja Reinhard</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:16px;margin-left:auto;align-items:center">
+    <div class="hstat"><div class="hstat-v">6.207</div><div class="hstat-l">Total Desa</div></div>
+    <div class="hstat"><div class="hstat-v" id="hf" style="color:var(--a2)">—</div><div class="hstat-l">Filter</div></div>
+    <div class="hstat"><div class="hstat-v" style="color:var(--a3)">38</div><div class="hstat-l">Provinsi</div></div>
+  </div>
+  <div style="display:flex;gap:6px;margin-left:14px">
+    <button class="btn btn-g" onclick="document.getElementById('importMo').classList.add('on')">⊕ Update Data</button>
+    <button class="btn btn-a" onclick="switchPanel('download')">⬇ Download</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sb">
+    <!-- Search -->
+    <div class="fs"><div class="ft"><span class="dot" style="background:var(--acc)"></span>Pencarian</div>
+      <div class="sbox"><input type="text" id="si" placeholder="Nama desa wisata / kabupaten..." oninput="sf()"></div>
+    </div>
+
+    <!-- Klasifikasi -->
+    <div class="fs"><div class="ft"><span class="dot" style="background:var(--a3)"></span>Klasifikasi</div>
+      <div class="tg-grp">
+        <div class="tg tg-ri on" onclick="toggleKlas(this,'Rintisan')">Rintisan</div>
+        <div class="tg tg-be on" onclick="toggleKlas(this,'Berkembang')">Berkembang</div>
+        <div class="tg tg-ma on" onclick="toggleKlas(this,'Maju')">Maju</div>
+        <div class="tg tg-mn on" onclick="toggleKlas(this,'Mandiri')">Mandiri</div>
+      </div>
+    </div>
+
+    <!-- Wilayah -->
+    <div class="fs"><div class="ft"><span class="dot" style="background:var(--a2)"></span>Wilayah</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="sw"><select id="fReg" onchange="sf()"><option value="">— Semua Region —</option>
+          <option>SUMATRA</option><option>JAWA</option><option>BALINUSRA</option>
+          <option>KALIMANTAN</option><option>SULAWESI</option><option>MALUKU</option><option>PAPUA</option>
+        </select></div>
+        <div class="sw"><select id="fProv" onchange="onProvChange()"><option value="">— Semua Provinsi —</option></select></div>
+        <div class="sw"><select id="fKab" onchange="sf()"><option value="">— Semua Kabupaten/Kota —</option></select></div>
+        <div class="sw"><select id="fKaw" onchange="sf()"><option value="">— Semua Kawasan Prioritas —</option>
+          <option>DPP Borobudur</option><option>DPP Mandalika</option><option>DR Bali</option>
+          <option>DPP Danau Toba</option><option>DR Greater Jakarta</option>
+          <option>DPP Bromo - Tengger - Semeru</option><option>DPP Bangka Belitung</option>
+          <option>DPP Likupang</option><option>DR Kepulauan Riau</option>
+          <option>DPP Labuan Bajo</option><option>DPP Raja Ampat</option>
+          <option>DPP Wakatobi</option><option>DPP Morotai</option>
+        </select></div>
+      </div>
+    </div>
+
+    <!-- ADWI -->
+    <div class="fs"><div class="ft"><span class="dot" style="background:var(--a3)"></span>Capaian ADWI <span style="margin-left:auto;font-size:9px;color:var(--muted);font-weight:400">per tahun</span></div>
+      <div class="sw" style="margin-bottom:8px"><select id="fAdwiLvl" onchange="sf()"><option value="">— Semua capaian ADWI —</option>
+        <optgroup label="Pemenang"><option value="win">🏆 Pemenang (50/75 Besar)</option></optgroup>
+        <optgroup label="Capaian"><option value="100">🥈 Min. 100 Besar</option><option value="300">🥉 Min. 300 Besar</option><option value="500">📋 Min. 500 Besar</option></optgroup>
+      </select></div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div class="adwi-yr">ADWI 2021</div>
+        <div class="alv lw"><input type="checkbox" id="a21w" onchange="sf()"><label for="a21w">50 Besar</label><span class="cnt">50</span></div>
+        <div class="alv l1"><input type="checkbox" id="a21c" onchange="sf()"><label for="a21c">100 Besar</label><span class="cnt">47</span></div>
+        <div class="alv l3"><input type="checkbox" id="a21t" onchange="sf()"><label for="a21t">300 Besar</label><span class="cnt">183</span></div>
+        <div class="adwi-sep"></div>
+        <div class="adwi-yr">ADWI 2022</div>
+        <div class="alv lw"><input type="checkbox" id="a22w" onchange="sf()"><label for="a22w">50 Besar</label><span class="cnt">50</span></div>
+        <div class="alv l1"><input type="checkbox" id="a22c" onchange="sf()"><label for="a22c">100 Besar</label><span class="cnt">50</span></div>
+        <div class="alv l3"><input type="checkbox" id="a22t" onchange="sf()"><label for="a22t">300 Besar</label><span class="cnt">201</span></div>
+        <div class="alv l5"><input type="checkbox" id="a22f" onchange="sf()"><label for="a22f">500 Besar</label><span class="cnt">191</span></div>
+        <div class="adwi-sep"></div>
+        <div class="adwi-yr">ADWI 2023</div>
+        <div class="alv lw"><input type="checkbox" id="a23w" onchange="sf()"><label for="a23w">75 Besar</label><span class="cnt">75</span></div>
+        <div class="alv l3"><input type="checkbox" id="a23t" onchange="sf()"><label for="a23t">300 Besar</label><span class="cnt">223</span></div>
+        <div class="alv l5"><input type="checkbox" id="a23f" onchange="sf()"><label for="a23f">500 Besar</label><span class="cnt">196</span></div>
+        <div class="adwi-sep"></div>
+        <div class="adwi-yr">ADWI 2024</div>
+        <div class="alv lw"><input type="checkbox" id="a24w" onchange="sf()"><label for="a24w">50 Besar</label><span class="cnt">51</span></div>
+        <div class="alv l1"><input type="checkbox" id="a24c" onchange="sf()"><label for="a24c">100 Besar</label><span class="cnt">50</span></div>
+        <div class="alv l3"><input type="checkbox" id="a24t" onchange="sf()"><label for="a24t">300 Besar</label><span class="cnt">199</span></div>
+        <div class="alv l5"><input type="checkbox" id="a24f" onchange="sf()"><label for="a24f">500 Besar</label><span class="cnt">200</span></div>
+        <div class="adwi-sep"></div>
+        <div class="ck"><input type="checkbox" id="faP" onchange="sf()"><label for="faP">Pemenang Kategori ADWI</label></div>
+      </div>
+    </div>
+
+    <!-- Sertidewi -->
+    <div class="fs"><div class="ft"><span class="dot" style="background:var(--acc)"></span>Sertidewi</div>
+      <div class="ck-list"><div class="ck"><input type="checkbox" id="fSe" onchange="sf()"><label for="fSe">Semua Tersertifikasi</label><span class="cnt">43</span></div></div>
+      <div style="margin-top:8px;font-size:9px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Tahun Sertifikasi</div>
+      <div class="sert-tags">
+        <div class="stag" data-yr="2020" onclick="toggleSert(this)">2020 <span style="opacity:.6">(16)</span></div>
+        <div class="stag" data-yr="2021" onclick="toggleSert(this)">2021 <span style="opacity:.6">(15)</span></div>
+        <div class="stag" data-yr="2022" onclick="toggleSert(this)">2022 <span style="opacity:.6">(3)</span></div>
+        <div class="stag" data-yr="2024" onclick="toggleSert(this)">2024 <span style="opacity:.6">(4)</span></div>
+        <div class="stag" data-yr="2025" onclick="toggleSert(this)">2025 <span style="opacity:.6">(5)</span></div>
+        <div class="stag resert" data-yr="resert" onclick="toggleSert(this)">&#8635; Re-Sertifikasi 2025 <span style="opacity:.6">(5)</span></div>
+      </div>
+    </div>
+
+    <!-- Awards -->
+    <div class="fs"><div class="ft"><span class="dot" style="background:var(--a4)"></span>Penghargaan Internasional</div>
+      <div class="ck-list">
+        <div class="ck"><input type="checkbox" id="fUN" onchange="sf()"><label for="fUN">UN Best Tourism Village</label><span class="cnt">9</span></div>
+        <div class="ck"><input type="checkbox" id="fAS" onchange="sf()"><label for="fAS">ASEAN Tourism Awards</label><span class="cnt">33</span></div>
+        <div class="ck"><input type="checkbox" id="fWI" onchange="sf()"><label for="fWI">WIA 2025</label><span class="cnt">15</span></div>
+        <div class="ck"><input type="checkbox" id="fIS" onchange="sf()"><label for="fIS">ISTA (2017-2019)</label></div>
+        <div class="ck"><input type="checkbox" id="fKS" onchange="sf()"><label for="fKS">KSW</label><span class="cnt">45</span></div>
+        <div class="ck"><input type="checkbox" id="fDW" onchange="sf()"><label for="fDW">Desa Wisata Nusantara</label></div>
+      </div>
+    </div>
+
+    <!-- Mitra -->
+    <div class="fs"><div class="ft"><span class="dot" style="background:var(--a3)"></span>Mitra Strategis</div>
+      <div class="mitra-tags">
+        <div class="mtag" data-mitra="Bank BRI" onclick="toggleMitra(this)">🏦 Bank BRI <span style="opacity:.6;font-size:9px">(309)</span></div>
+        <div class="mtag" data-mitra="PT. Astra International" onclick="toggleMitra(this)">🚗 Astra <span style="opacity:.6;font-size:9px">(43)</span></div>
+        <div class="mtag" data-mitra="Bank BCA" onclick="toggleMitra(this)">🏦 BCA <span style="opacity:.6;font-size:9px">(20)</span></div>
+        <div class="mtag" data-mitra="Bank Indonesia" onclick="toggleMitra(this)">🏛 Bank Indonesia <span style="opacity:.6;font-size:9px">(20)</span></div>
+        <div class="mtag" data-mitra="TikTok Indonesia" onclick="toggleMitra(this)">📱 TikTok <span style="opacity:.6;font-size:9px">(7)</span></div>
+        <div class="mtag" data-mitra="Danone Indonesia" onclick="toggleMitra(this)">💧 Danone <span style="opacity:.6;font-size:9px">(7)</span></div>
+        <div class="mtag" data-mitra="Adira Finance" onclick="toggleMitra(this)">💳 Adira Finance <span style="opacity:.6;font-size:9px">(4)</span></div>
+      </div>
+    </div>
+
+    <!-- Ekosistem -->
+    <div class="fs"><div class="ft"><span class="dot" style="background:#22d3ee"></span>Ekosistem</div>
+      <div class="ck-list">
+        <div class="ck"><input type="checkbox" id="fPK" onchange="sf()"><label for="fPK">Desa Proklim</label></div>
+        <div class="ck"><input type="checkbox" id="fDE" onchange="sf()"><label for="fDE">Destana</label></div>
+        <div class="ck"><input type="checkbox" id="fKE" onchange="sf()"><label for="fKE">Dalam KEK</label></div>
+      </div>
+      <div class="sw" style="margin-top:6px"><select id="fUG" onchange="sf()"><option value="">— Keunggulan Produk —</option>
+        <option>Kuliner</option><option>Kriya</option><option>Seni Pertunjukan</option>
+        <option>Aplikasi dan Gim</option><option>Penerbitan</option><option>FAV</option>
+      </select></div>
+    </div>
+
+    <button class="btn btn-g" style="width:100%;justify-content:center" onclick="resetAll()">&#8635; Reset Semua Filter</button>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="rc">Menampilkan <strong id="rc">0</strong> desa wisata</div>
+      <div class="vtabs">
+        <button class="vt on" onclick="switchPanel('table')">&#8862; Tabel</button>
+        <button class="vt" onclick="switchPanel('map')">&#128506; Peta</button>
+        <button class="vt" onclick="switchPanel('chart')">&#128202; Analitik</button>
+        <button class="vt" onclick="switchPanel('download')">&#8681; Download</button>
+      </div>
+    </div>
+
+    <div class="af-bar" id="afbar"><span class="af-empty">Tidak ada filter aktif &mdash; menampilkan semua data</span></div>
+
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi"><div class="kv cg" id="k0">0</div><div class="kl">Total Desa</div></div>
+      <div class="kpi"><div class="kv cb" id="k1">0</div><div class="kl">Mandiri + Maju</div><div class="ks" id="k1s"></div></div>
+      <div class="kpi"><div class="kv ca" id="k2">0</div><div class="kl">Peserta ADWI</div><div class="ks" id="k2s"></div></div>
+      <div class="kpi"><div class="kv cg" id="k3">0</div><div class="kl">Sertidewi</div></div>
+      <div class="kpi"><div class="kv cp" id="k4">0</div><div class="kl">Award Internasional</div></div>
+    </div>
+
+    <!-- TABLE PANEL -->
+    <div class="panel on" id="panel-table">
+      <div class="tw" id="tw"><table><thead><tr>
+        <th onclick="sortBy('nama')">Desa Wisata</th>
+        <th onclick="sortBy('klasifikasi')">Klasifikasi</th>
+        <th onclick="sortBy('provinsi')">Provinsi / Kab</th>
+        <th onclick="sortBy('kawasan')">Kawasan</th>
+        <th>Capaian ADWI</th><th>Award</th><th>Sertidewi</th><th>Mitra</th><th>Link</th>
+      </tr></thead><tbody id="tb"></tbody></table></div>
+      <div class="pg">
+        <button onclick="prevP()">&#8592; Prev</button>
+        <span class="pi" id="pi">—</span>
+        <button onclick="nextP()">Next &#8594;</button>
+        <span style="color:var(--muted);margin-left:auto;font-size:11px">Per hal:</span>
+        <select style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:2px 7px;border-radius:5px;margin-left:5px;font-size:11px;font-family:inherit" onchange="ps=+this.value;cp=1;renderTable()">
+          <option value="25">25</option><option value="50" selected>50</option><option value="100">100</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- MAP PANEL -->
+    <div class="panel" id="panel-map"><div id="map"></div></div>
+
+    <!-- CHART PANEL -->
+    <div class="panel" id="panel-chart"><div class="cp-inner" id="ca"></div></div>
+
+    <!-- DOWNLOAD PANEL -->
+    <div class="panel" id="panel-download"><div class="dl-panel">
+      <h2 style="font-size:17px;font-weight:700;margin-bottom:5px">Download Data</h2>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:16px">Sesuai filter aktif: <strong id="dlc" style="color:var(--acc)">0</strong> desa wisata</p>
+      <div class="dl-grid">
+        <div class="dlc"><div style="font-size:24px">&#128202;</div><div style="font-weight:700;font-size:13px">Excel (.xlsx)</div><div style="font-size:11px;color:var(--muted)">Semua kolom, siap diolah di Excel atau Google Sheets.</div><button class="btn btn-p" onclick="dlExcel()">Download Excel</button></div>
+        <div class="dlc"><div style="font-size:24px">&#128203;</div><div style="font-weight:700;font-size:13px">CSV</div><div style="font-size:11px;color:var(--muted)">Format universal untuk Tableau, Power BI.</div><button class="btn btn-g" onclick="dlCSV()">Download CSV</button></div>
+        <div class="dlc"><div style="font-size:24px">&#128193;</div><div style="font-weight:700;font-size:13px">JSON</div><div style="font-size:11px;color:var(--muted)">Format terstruktur untuk integrasi sistem.</div><button class="btn btn-g" onclick="dlJSON()">Download JSON</button></div>
+        <div class="dlc"><div style="font-size:24px">&#128247;</div><div style="font-weight:700;font-size:13px">Screenshot PNG</div><div style="font-size:11px;color:var(--muted)">Tangkap tampilan tabel atau grafik.</div><button class="btn btn-g" onclick="dlPNG()">Screenshot PNG</button></div>
+        <div class="dlc"><div style="font-size:24px">&#128205;</div><div style="font-weight:700;font-size:13px">GeoJSON</div><div style="font-size:11px;color:var(--muted)">Data spasial untuk QGIS, ArcGIS, Google Maps.</div><button class="btn btn-g" onclick="dlGeo()">Download GeoJSON</button></div>
+        <div class="dlc"><div style="font-size:24px">&#128209;</div><div style="font-weight:700;font-size:13px">Laporan Ringkasan</div><div style="font-size:11px;color:var(--muted)">Agregat per provinsi, klasifikasi & kawasan.</div><button class="btn btn-a" onclick="dlSummary()">Download Ringkasan</button></div>
+      </div>
+    </div></div>
+  </main>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="mo" id="detMo" onclick="if(event.target===this)closeM()">
+  <div class="md"><span class="mc" onclick="closeM()">&#10005;</span><h3 id="mTitle"></h3><div id="mBody"></div></div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="mo" id="importMo" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="md"><span class="mc" onclick="document.getElementById('importMo').classList.remove('on')">&#10005;</span>
+    <h3>Update / Import Data</h3>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Upload Excel atau CSV untuk menambah/memperbarui data.</p>
+    <div style="background:var(--bg3);border:2px dashed var(--border);border-radius:9px;padding:18px;text-align:center;margin-bottom:12px">
+      <div style="font-size:28px;margin-bottom:6px">&#128193;</div>
+      <div style="font-size:11px;color:var(--muted)">Mendukung .xlsx, .xls, .csv</div>
+      <input type="file" id="impF" accept=".xlsx,.csv,.xls" style="display:none" onchange="handleImport(this)">
+      <button class="btn btn-p" style="margin-top:8px" onclick="document.getElementById('impF').click()">Pilih File</button>
+    </div>
+    <div id="impLog" style="font-size:11px;color:var(--muted)"></div>
+  </div>
+</div>
+
+<script>
+// Load data and delineation
+let RAW = [];
+let DELIN = {};
+
+// Fetch data from external files
+Promise.all([
+  fetch('data.json').then(r => r.json()),
+  fetch('delineation.json').then(r => r.json())
+]).then(([data, delin]) => {
+  RAW = data;
+  DELIN = delin;
+  console.log('Data loaded:', RAW.length, 'records');
+  console.log('Delineation loaded:', Object.keys(DELIN).length, 'kawasan');
+  
+  // Start init after data loaded
+  document.getElementById('loading').querySelector('div:nth-child(2)').textContent = 'Menyiapkan dashboard...';
+  
+  setTimeout(() => {
+    try {
+      console.log('Starting applyFilter...');
+      applyFilter();
+      console.log('Dashboard ready! Filtered:', F.length, 'records');
+      document.getElementById('loading').style.display='none';
+    } catch(err) {
+      console.error('Error:', err);
+      alert('Error: '+err.message+'\n\nCheck console (F12) for details');
+      document.getElementById('loading').style.display='none';
+    }
+  }, 100);
+}).catch(err => {
+  console.error('Failed to load data:', err);
+  alert('Error loading data: '+err.message);
+  document.getElementById('loading').style.display='none';
+});
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>

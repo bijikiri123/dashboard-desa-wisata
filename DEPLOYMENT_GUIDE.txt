@@ -1,0 +1,209 @@
+═══════════════════════════════════════════════════════════════════════════════
+DASHBOARD DESA WISATA - DEPLOYMENT GUIDE
+═══════════════════════════════════════════════════════════════════════════════
+
+📦 VERCEL DEPLOYMENT - STEP BY STEP
+
+STEP 1: Download Files
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Download folder: vercel-dashboard/
+
+Files included:
+  ✅ index.html           (20 KB) - Main HTML
+  ✅ style.css            (13 KB) - Stylesheet
+  ✅ script.js            (31 KB) - JavaScript logic
+  ✅ data.json            (3.4 MB) - 6,207 desa wisata
+  ✅ delineation.json     (2 KB) - 13 kawasan prioritas
+  ✅ package.json         - NPM config
+  ✅ vercel.json          - Vercel config
+  ✅ README.md            - Documentation
+  ✅ .gitignore           - Git ignore
+  ✅ .nojekyll            - GitHub Pages marker
+
+
+STEP 2: Push ke GitHub
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Buka Terminal/Command Prompt di folder vercel-dashboard/:
+
+  $ git init
+  $ git add .
+  $ git commit -m "Dashboard Desa Wisata - Initial commit"
+  $ git branch -M main
+  $ git remote add origin https://github.com/YOUR_USERNAME/dashboard-desa-wisata.git
+  $ git push -u origin main
+
+(Ganti YOUR_USERNAME dengan username GitHub Anda)
+
+
+STEP 3: Deploy ke Vercel
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Opsi A - Auto Deploy dari GitHub (Recommended):
+  1. Buka https://vercel.com
+  2. Login dengan GitHub account
+  3. Klik "New Project"
+  4. Pilih repository: dashboard-desa-wisata
+  5. Framework Preset: Other
+  6. Klik "Deploy"
+  7. Selesai! URL: dashboard-desa-wisata.vercel.app
+
+Opsi B - Vercel CLI (Fast):
+  1. Install Vercel CLI: npm install -g vercel
+  2. cd /path/to/vercel-dashboard
+  3. vercel
+  4. Follow prompts
+  5. Done!
+
+
+STEP 4: Custom Domain (Optional)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Di Vercel Dashboard:
+  1. Klik project Anda
+  2. Settings → Domains
+  3. Add custom domain: desawisata.kemenpar.go.id
+  4. Update DNS records di domain provider
+  5. Wait 5-10 minutes untuk propagasi
+
+
+STEP 5: Verify Deployment
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Dashboard loads dalam 2-3 detik
+✅ Tabel data muncul dengan 50 rows
+✅ Filter responsif
+✅ Peta render saat tab "Peta" diklik
+✅ Download buttons bekerja
+✅ Open browser console (F12) → lihat "Dashboard ready!" message
+
+
+═══════════════════════════════════════════════════════════════════════════════
+QUICK REFERENCE
+═══════════════════════════════════════════════════════════════════════════════
+
+Production URL:     https://dashboard-desa-wisata.vercel.app
+Data Last Updated:  25 Mei 2026
+Author:             Raja Reinhard
+Total Records:      6,207 desa wisata
+Kawasan Prioritas:  1,027 desa (13 kawasan)
+
+Browser Support:
+  ✅ Chrome 90+
+  ✅ Firefox 88+
+  ✅ Safari 14+
+  ✅ Edge 90+
+  ✅ Mobile browsers
+
+Performance:
+  ✅ Initial load: 2-3 seconds
+  ✅ First paint: <1 second
+  ✅ Fully interactive: 3 seconds
+  ✅ Network: Optimized (3.5 MB data)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ENVIRONMENT VARIABLES (Optional)
+═══════════════════════════════════════════════════════════════════════════════
+
+Tidak ada environment variables yang diperlukan. Dashboard 100% static.
+
+Untuk custom configuration:
+  1. Edit vercel.json untuk headers dan rewrites
+  2. Edit index.html untuk metadata/SEO
+  3. Edit style.css untuk branding
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════════
+
+❌ "Loading forever" / Blank screen
+→ Check browser console (F12)
+→ Ensure data.json and delineation.json load successfully
+→ Try hard refresh (Ctrl+Shift+R)
+
+❌ "data.json 404"
+→ Verify all files in same directory
+→ Check Vercel deployment logs
+→ Re-deploy with vercel --prod
+
+❌ "Styles not loading"
+→ Check style.css is deployed
+→ Browser cache issue - hard refresh
+→ Check CSS links in index.html
+
+❌ "Map not showing"
+→ Leaflet CDN might be blocked
+→ Check browser console for errors
+→ Verify leaflet.css and leaflet.js loaded
+
+❌ "Download buttons don't work"
+→ Check CORS headers (see vercel.json)
+→ Test locally first
+→ Check browser security console
+
+
+═══════════════════════════════════════════════════════════════════════════════
+UPDATING DATA
+═══════════════════════════════════════════════════════════════════════════════
+
+Saat ada update data desa wisata:
+
+1. Update data.json dengan records terbaru
+2. Update delineation.json jika ada perubahan kawasan
+3. Update version info di index.html (Update date + Author)
+4. Git commit dan push
+5. Auto-deploy ke Vercel (GitHub integration)
+
+Atau langsung upload file baru ke Vercel dashboard.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SUPPORT & MAINTENANCE
+═══════════════════════════════════════════════════════════════════════════════
+
+Monitoring:
+  - Vercel provides free analytics
+  - Check deployment logs for errors
+  - Monitor performance in Vercel dashboard
+
+Maintenance:
+  - Update data quarterly or as needed
+  - Monitor Leaflet/XLSX library versions
+  - Test new features before deploying
+
+Contact:
+  - Maintainer: Raja Reinhard
+  - Last Updated: 25 Mei 2026
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FILE SIZES & PERFORMANCE
+═══════════════════════════════════════════════════════════════════════════════
+
+HTML:           20 KB
+CSS:            13 KB
+JavaScript:     31 KB
+Data (JSON):    3.4 MB
+Delineation:    2 KB
+─────────────────────
+Total:          3.5 MB
+
+Load times (first visit):
+  - Parse HTML/CSS/JS: < 1 second
+  - Fetch data.json: 1-2 seconds (network dependent)
+  - Initialize dashboard: < 1 second
+  ───────────────────────────────
+  Total: 2-3 seconds (normal)
+
+Subsequent visits:
+  - Browser cache: < 1 second
+  - Full init: < 3 seconds
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Questions? Check README.md in the deployment folder!
+

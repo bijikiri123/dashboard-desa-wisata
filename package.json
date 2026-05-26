@@ -1,0 +1,17 @@
+{
+  "name": "dashboard-desa-wisata",
+  "version": "1.0.0",
+  "description": "Dashboard Desa Wisata Indonesia - Kementerian Pariwisata",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 3000"
+  },
+  "keywords": [
+    "desa-wisata",
+    "tourism",
+    "indonesia",
+    "dashboard"
+  ],
+  "author": "Raja Reinhard",
+  "license": "MIT"
+}
