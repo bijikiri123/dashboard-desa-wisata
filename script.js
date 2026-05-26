@@ -146,7 +146,9 @@ function updateKPIs(){
   var n=F.length;
   var mm=F.filter(function(r){return r.klasifikasi==='Mandiri'||r.klasifikasi==='Maju';}).length;
   var adwi=F.filter(function(r){return r.adwi21||r.adwi22||r.adwi23||r.adwi24;}).length;
-  var adwiW=F.filter(function(r){return adwiBest(r)<=1;}).length;
+  var adwi = F.filter(function(r){
+    return r.adwi21 || r.adwi22 || r.adwi23 || r.adwi24;
+}).length;
   var srt=F.filter(function(r){return r.sertidewi_tahun;}).length;
   var intl=F.filter(function(r){return r.unwto||r.asean_sta||r.ista||r.wia25;}).length;
   document.getElementById('k0').textContent=n.toLocaleString('id');
